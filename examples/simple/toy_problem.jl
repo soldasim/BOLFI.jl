@@ -7,7 +7,7 @@ using Distributions
 
 # - - - PARAMETER DOMAIN - - - - -
 
-x_dim() = 2
+x_dim() = 1 # TODO
 get_bounds() = (fill(-5., x_dim()), fill(5., x_dim()))
 
 
@@ -55,11 +55,18 @@ const λ_MIN = 0.01
 const λ_MAX = 10.
 get_length_scale_priors() = fill(Product(fill(calc_inverse_gamma(λ_MIN, λ_MAX), x_dim())), y_dim)
 
+const α_MIN = 0.01
+const α_MAX = 100.
 function get_amplitude_priors()
     return fill(truncated(Normal(0., 5.); lower=0.), y_dim)
+    # return fill(calc_inverse_gamma(α_MIN, α_MAX), y_dim)
 end
 
+const NOISE_MIN = 0.01
+const NOISE_MAX = 10.
 function get_noise_std_priors()
+    # return fill(Dirac(0.5), y_dim)
+    # return fill(calc_inverse_gamma(NOISE_MIN, NOISE_MAX), y_dim)
     μ_std = ω
     max_std = 10 * ω
     return [truncated(Normal(μ_std[i], max_std[i] / 3); lower=0.) for i in 1:y_dim]
