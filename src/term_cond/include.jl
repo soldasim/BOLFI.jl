@@ -1,3 +1,7 @@
 include("term_cond.jl")
 include("ae_confidence.jl")
 include("ublb_confidence.jl")
+include("js_div.jl")
+include("mmd.jl")
+include("opt_transport.jl")
+include("ll_std.jl")

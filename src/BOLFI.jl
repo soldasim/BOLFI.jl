@@ -11,19 +11,17 @@ export set_iou
 
 export BolfiAcquisition, PostVarAcq, MWMVAcq
 export BolfiTermCond, AEConfidence, UBLBConfidence
+export JSDivergence, MaximumMeanDiscrepancy, OptTransport, LikelihoodStd # TODO
 export BolfiCallback
 export BolfiOptions
 
+export GaussMixOptions
+
 using BOSS
 using Distributions
+using Distances
+using OptimalTransport
 
-include("problem/include.jl")
-include("utils.jl")
-include("options.jl")
-include("posterior.jl")
-include("confidence_set.jl")
-include("acquisition/include.jl")
-include("term_cond/include.jl")
-include("main.jl")
+include("include.jl")
 
 end
