@@ -7,7 +7,6 @@ the method `cb(::BolfiProblem; kwargs...)` will be called in every iteration.
 cb(problem::BolfiProblem;
     model_fitter::BOSS.ModelFitter,
     acq_maximizer::BOSS.AcquisitionMaximizer,
-    acquisition::BOLFI.AcqWrapper,              # `BolfiAcquisition` wrapped into `AcqWrapper`
     term_cond::TermCond,                        # either `BOSS.TermCond` or a `BolfiTermCond` wrapped into `TermCondWrapper`
     options::BossOptions,
     first::Bool,
@@ -43,3 +42,12 @@ end
 CallbackWrapper(cb::BossCallback, ::BolfiProblem) = cb
 
 (wrap::CallbackWrapper)(::BossProblem; kwargs...) = wrap.callback(wrap.bolfi; kwargs...)
+
+"""
+    NoCallback()
+
+A dummy `BolfiCallback` which does nothing.
+"""
+struct NoCallback <: BolfiCallback end
+
+function (::NoCallback)(::BolfiProblem; kwargs...) end
