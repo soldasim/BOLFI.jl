@@ -24,19 +24,21 @@ export GutmannNormalLikelihood, GutmannGaussianLikelihood
 export NormalLikelihood, GaussianLikelihood
 export LogNormalLikelihood, LogGaussianLikelihood
 export BinomialLikelihood
+export MvNormalLikelihood
 
-export BolfiAcquisition, PostVarAcq, MWMVAcq
+export BolfiAcquisition, MaxVar, LogMaxVar, MWMV, EIIG, EIV, IMIQR
 export BolfiTermCond, AEConfidence, UBLBConfidence
-export BolfiCallback, CombinedCallback, NoCallback
+export BolfiCallback, CombinedCallback, NoCallback, MetricCallback
 export BolfiOptions
 
-export DistributionSampler, RejectionSampler, TuringSampler, AMISSampler
-export LikelihoodMaximizer
+export DistributionSampler, PureSampler, WeightedSampler
+export RejectionSampler, TuringSampler, AMISSampler
+export LogpdfMaximizer
 export ProposalDistribution, NormalProposal
 export DistributionFitter, AnalyticalFitter, OptimizationFitter
 
 export DistributionMetric, SampleMetric, PDFMetric
-export MMDMetric
+export MMDMetric, OptMMDMetric
 export TVMetric
 
 using BOSS
@@ -47,7 +49,9 @@ using KernelFunctions
 using Statistics
 using Optimization
 using ProgressMeter
+using DifferentiationInterface
 using ForwardDiff
+using LazyArrays
 
 using StatsFuns         # used in GutmannNormalLikelihood
 using SpecialFunctions  # used in utils/owent.jl: erfc

@@ -27,13 +27,13 @@ re-fitted in each iteration.
 - `gauss_mix_options::Union{Nothing, GaussMixOptions}`: Options for the Gaussian mixture approximation
         used for the 0th iteration. Defaults to `nothing`, which means the Laplace approximation is used instead.
 """
-@kwdef struct AMISSampler <: DistributionSampler
+@kwdef struct AMISSampler <: WeightedSampler
     iters::Int
     proposal_fitter::DistributionFitter = AnalyticalFitter()
     gauss_mix_options::GaussMixOptions
 end
 
-function sample_posterior(sampler::AMISSampler, post::Function, domain::Domain, count::Int;
+function sample_posterior(sampler::AMISSampler, logpost::Function, domain::Domain, count::Int;
     options::BolfiOptions = BolfiOptions(),
 )
     iters = sampler.iters
@@ -41,11 +41,13 @@ function sample_posterior(sampler::AMISSampler, post::Function, domain::Domain, 
     samples_per_iter = samples_total / iters |> ceil |> Int
     (samples_per_iter < 50) && @warn "AMIS: Low sample count ($samples_per_iter) per iteration!"
 
-    logpost = x -> log(post(x))
-
     # Initialize the proposal distribution
     x_dim_ = x_dim(domain)
-    q = NormalProposal(MvNormal(zeros(x_dim_), ones(x_dim_)))
+    lb, ub = domain.bounds
+    μ = mean(domain.bounds)
+    Σ = Diagonal((ub .- lb) ./ 5)
+    # the initial parameters `μ, Σ` are important if `approx_by_gauss_mix` returns `nothing`
+    q = NormalProposal(MvNormal(μ, Σ))
     init_q = approx_by_gauss_mix(logpost, domain, sampler.gauss_mix_options)
 
     amis = AMIS(;
