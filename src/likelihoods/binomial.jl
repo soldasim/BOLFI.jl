@@ -3,7 +3,7 @@
     BinomialLikelihood(; z_obs, trials, kwargs...)
 
 The observation is assumed to have been generated from a Binomial distribution
-as `z_o \\sim Binomial(trials, f(x))`. We can use the simulator to query `z = f(x)`.
+as `z_o \\sim Binomial(trials, f(x))`. We can use the simulator to query `y = f(x)`.
 
 The simulator should only return values between 0 and 1. The GP estimates are clamped to this range.
 
@@ -25,34 +25,26 @@ The simulator should only return values between 0 and 1. The GP estimates are cl
     end
 end
 
-function loglike(like::BinomialLikelihood, δ::AbstractVector{<:Real})
+function loglike(like::BinomialLikelihood, y::AbstractVector{<:Real})
     # if any(z .< 0.) || any(z .> 1.)
     #     @warn "Called `loglike(::BinomialLikelihood, z)`, where `z = $z` is outside of range `[0, 1]`."
     #     z .= clamp.(z, 0., 1.)
     # end
-    δ .= clamp.(δ, 0., 1.)
+    y .= clamp.(y, 0., 1.)
 
     # return sum(logpdf.(Binomial.(like.trials, z), like.z_obs))
-    return mapreduce((t, p, y) -> logpdf(Binomial(t, p), y), +, like.trials, δ, like.z_obs)
+    return mapreduce((t, p, y) -> logpdf(Binomial(t, p), y), +, like.trials, y, like.z_obs)
 end
 
-function log_approx_likelihood(like::BinomialLikelihood, bolfi::BolfiProblem, model_post::ModelPosterior)
+function log_likelihood_mean(like::BinomialLikelihood, bolfi::BolfiProblem, model_post::ModelPosterior;
+    ϵs = nothing,    
+)
     z_obs = like.z_obs
     trials = like.trials
 
-    function log_approx_like(x::AbstractVector{<:Real})
-        μ_ps = mean(model_post, x)
-
-        ps = clamp.(μ_ps, Ref(0.), Ref(1.))
-        return logpdf.(Binomial.(trials, ps), z_obs) |> sum
+    if isnothing(ϵs)
+        ϵs = rand(Uniform(0, 1), like.int_grid_size)
     end
-end
-
-function log_likelihood_mean(like::BinomialLikelihood, bolfi::BolfiProblem, model_post::ModelPosterior)
-    z_obs = like.z_obs
-    trials = like.trials
-
-    ϵs = rand(Uniform(0, 1), like.int_grid_size)
 
     # TODO refactor
     function log_like_mean(x::AbstractVector{<:Real})
@@ -68,14 +60,18 @@ function log_likelihood_mean(like::BinomialLikelihood, bolfi::BolfiProblem, mode
     end
 end
 
-function log_sq_likelihood_mean(like::BinomialLikelihood, bolfi::BolfiProblem, model_post::ModelPosterior)
+function log_sq_likelihood_mean(like::BinomialLikelihood, bolfi::BolfiProblem, model_post::ModelPosterior;
+    ϵs = nothing,    
+)
     z_obs = like.z_obs
     trials = like.trials
 
-    ϵs = rand(Uniform(0, 1), like.int_grid_size)
+    if isnothing(ϵs)
+        ϵs = rand(Uniform(0, 1), like.int_grid_size)
+    end
 
     # TODO refactor
-    function log_like_mean(x::AbstractVector{<:Real})
+    function log_sq_like_mean(x::AbstractVector{<:Real})
         ps_dists = truncated.(Normal.(mean_and_std(model_post, x)...); lower=0., upper=1.)
         
         ll = 0.
@@ -85,6 +81,19 @@ function log_sq_likelihood_mean(like::BinomialLikelihood, bolfi::BolfiProblem, m
             ll += log(mean(vals))
         end
         return ll
+    end
+end
+
+# share the noise samples `ϵs`
+function log_likelihood_variance(like::BinomialLikelihood, bolfi::BolfiProblem, model_post::ModelPosterior)
+    ϵs = rand(Uniform(0, 1), like.int_grid_size)
+
+    log_like_mean = log_likelihood_mean(like, bolfi, model_post; ϵs)
+    log_sq_like_mean = log_sq_likelihood_mean(like, bolfi, model_post; ϵs)
+
+    function log_like_var(x::AbstractVector{<:Real})
+        # return sq_like_mean(x) - like_mean(x)^2
+        return log( exp(log_sq_like_mean(x)) - exp(2 * log_like_mean(x)) )
     end
 end
 
