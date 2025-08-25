@@ -1,2 +1,6 @@
-include("post_var.jl")
+include("maxvar.jl")
+include("logmaxvar.jl")
 include("mwmv.jl")
+include("eimmd.jl")
+include("eiv.jl")
+include("imiqr.jl")

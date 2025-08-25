@@ -8,8 +8,7 @@ To define a custom likelihood, create a new subtype of `Likelihood`
 and implement the following API;
 
 Each subtype of `Likelihood` *should* implement:
-- `loglike(::Likelihood, z::AbstractVector{<:Real})` where `z` is the simulator output
-- `log_approx_likelihood(::Likelihood, ::BolfiProblem, ::ModelPosterior)`
+- `loglike(::Likelihood, y::AbstractVector{<:Real})` where `y` is the simulator output
 - `log_likelihood_mean(::Likelihood, ::BolfiProblem, ::ModelPosterior)`
 
 Each subtype of `Likelihood` *should* implement *at least one* of:
@@ -21,24 +20,25 @@ if `BolfiProblem` where `!isnothing(problem.y_sets)` is used:
 - `get_subset(::Likelihood, y_set::AsbtractVector{<:Bool})`:
 
 The following additional methods are provided by default and *need not be implemented*:
-- `like(::Likelihood, z::AbstractVector{<:Real})`
+- `log_approx_likelihood(::Likelihood, ::BolfiProblem, ::ModelPosterior)`
+- `like(::Likelihood, y:AbstractVector{<:Real})` where `y` is the simulator output
 """
 abstract type Likelihood end
 
 """
-    loglike(::Likelihood, δ::AbstractVector{<:Real})
+    loglike(::Likelihood, y::AbstractVector{<:Real})
 
-Return the log-likelihood of the observation given the simulator output `δ`.
+Return the log-likelihood of the observation given the simulator output `y`.
 """
 function loglike end
 
 """
-    pdf(::Likelihood, δ::AbstractVector{<:Real})
+    like(::Likelihood, y::AbstractVector{<:Real})
 
-Return the likelihood of the observation given the model output `δ`.
+Return the likelihood of the observation given the model output `y`.
 """
-function like(l::Likelihood, δ::AbstractVector{<:Real})
-    return exp(loglike(l, δ))
+function like(l::Likelihood, y::AbstractVector{<:Real})
+    return exp(loglike(l, y))
 end
 
 """
